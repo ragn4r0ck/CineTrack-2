@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CinéTrack - Catalogue</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col font-sans">
+
+  <header class="bg-gray-800 border-b border-gray-700 py-4 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <a href="index.html" class="text-2xl font-bold text-white tracking-wide">
+        Ciné<span class="text-red-500">Track</span>
+      </a>
+
+      <div class="flex-1 max-w-sm">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Rechercher un film ou une série..."
+          class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-1.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+        />
+      </div>
+
+      <a
+        href="admin.html"
+        class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-white font-medium"
+      >
+        Administration
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
+    <div class="flex gap-2 mb-4" id="filter-buttons">
+      <button data-type="all" class="filter-btn px-3 py-1 text-sm rounded bg-red-600 text-white font-medium">
+        Tous
+      </button>
+      <button data-type="movie" class="filter-btn px-3 py-1 text-sm rounded bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium">
+        Films
+      </button>
+      <button data-type="series" class="filter-btn px-3 py-1 text-sm rounded bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium">
+        Séries
+      </button>
+    </div>
+
+    <div id="status-message" class="hidden text-center py-12"></div>
+
+    <div id="items-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+
+    <div id="pagination-container" class="mt-6 pt-4 border-t border-gray-800 flex items-center justify-between">
+      <span class="text-xs text-gray-400">
+        Page <span id="current-page-num" class="font-bold text-white">1</span> sur <span id="total-pages-num" class="font-bold text-white">1</span>
+      </span>
+      <div id="pagination-buttons" class="flex gap-1"></div>
+    </div>
+  </main>
+
+</body>
+</html>
