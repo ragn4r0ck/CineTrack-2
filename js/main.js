@@ -1,5 +1,12 @@
 import { getContents } from "./api.js";
-import { createCard, showStatus, hideStatus } from "./ui.js";
+import { getFavorites, addFavorite, removeFavorite, isFavorite } from "./storage.js";
+import {
+  createCard,
+  createFavoriteItem,
+  showStatus,
+  hideStatus,
+  showToast,
+} from "./ui.js";
 
 const state = {
   allTitles: [],
@@ -18,6 +25,14 @@ const elements = {
   paginationButtons: document.getElementById("pagination-buttons"),
   currentPageNum: document.getElementById("current-page-num"),
   totalPagesNum: document.getElementById("total-pages-num"),
+  favoritesSidebar: document.getElementById("favorites-sidebar"),
+  favoritesList: document.getElementById("favorites-list"),
+  toggleFavoritesBtn: document.getElementById("toggle-favorites-btn"),
+  toggleFavoritesBtnMobile: document.getElementById("toggle-favorites-btn-mobile"),
+  closeSidebarBtn: document.getElementById("close-sidebar-btn"),
+  sidebarOverlay: document.getElementById("sidebar-overlay"),
+  mobileFavCount: document.getElementById("mobile-fav-count"),
+  tabletFavCount: document.getElementById("tablet-fav-count"),
 };
 
 function debounce(func, delay = 300) {
@@ -67,10 +82,53 @@ function updateView() {
   const itemsToShow = paginate(filtered, state.currentPage, state.itemsPerPage);
 
   elements.grid.innerHTML = itemsToShow
-    .map((item) => createCard(item, false, 0, 0))
+    .map((item) => createCard(item, isFavorite(item.id), 0, 0))
     .join("");
 
+  attachCardEvents();
   renderPagination(state.currentPage, totalPages);
+}
+
+function attachCardEvents() {
+  const favBtns = elements.grid.querySelectorAll(".favorite-toggle-btn");
+  favBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleFavorite(btn.dataset.id);
+    });
+  });
+}
+
+function toggleFavorite(id) {
+  if (isFavorite(id)) {
+    removeFavorite(id);
+    showToast("Retiré des favoris");
+  } else {
+    const item = state.allTitles.find((t) => String(t.id) === String(id));
+    if (item) {
+      addFavorite(item);
+      showToast("Ajouté aux favoris");
+    }
+  }
+
+  renderFavoritesView();
+  updateView();
+}
+
+function renderFavoritesView() {
+  const favorites = getFavorites();
+  const count = favorites.length;
+
+  if (elements.mobileFavCount) elements.mobileFavCount.textContent = count;
+  if (elements.tabletFavCount) elements.tabletFavCount.textContent = count;
+
+  if (count === 0) {
+    elements.favoritesList.innerHTML =
+      '<p class="text-xs text-gray-500 text-center py-4">Aucun favori pour le moment.</p>';
+    return;
+  }
+
+  elements.favoritesList.innerHTML = favorites.map(createFavoriteItem).join("");
 }
 
 function renderPagination(currentPage, totalPages) {
@@ -157,7 +215,41 @@ elements.paginationButtons.addEventListener("click", (e) => {
   }
 });
 
+elements.favoritesList.addEventListener("click", (e) => {
+  const btn = e.target.closest(".remove-favorite-btn");
+  if (!btn) return;
+
+  removeFavorite(btn.dataset.removeId);
+  renderFavoritesView();
+  updateView();
+});
+
+function toggleMobileSidebar(open) {
+  if (open) {
+    elements.favoritesSidebar.classList.remove("translate-x-full");
+    elements.sidebarOverlay.classList.remove("hidden");
+  } else {
+    elements.favoritesSidebar.classList.add("translate-x-full");
+    elements.sidebarOverlay.classList.add("hidden");
+  }
+}
+
+if (elements.toggleFavoritesBtn) {
+  elements.toggleFavoritesBtn.addEventListener("click", () => toggleMobileSidebar(true));
+}
+if (elements.toggleFavoritesBtnMobile) {
+  elements.toggleFavoritesBtnMobile.addEventListener("click", () => toggleMobileSidebar(true));
+}
+if (elements.closeSidebarBtn) {
+  elements.closeSidebarBtn.addEventListener("click", () => toggleMobileSidebar(false));
+}
+if (elements.sidebarOverlay) {
+  elements.sidebarOverlay.addEventListener("click", () => toggleMobileSidebar(false));
+}
+
 async function init() {
+  renderFavoritesView();
+
   showStatus(elements.statusMessage, "loading", "Chargement des titres...");
   elements.grid.innerHTML = "";
   elements.paginationContainer.classList.add("hidden");
