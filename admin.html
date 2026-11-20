@@ -8,36 +8,34 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col font-sans">
 
+  <!-- Header -->
   <header class="bg-gray-800 border-b border-gray-700 py-4 px-6">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <a href="index.html" class="text-2xl font-bold text-white tracking-wide">
-          Ciné<span class="text-red-500">Track</span>
-        </a>
-      </div>
+      <a href="index.html" class="text-2xl font-bold text-white tracking-wide">
+        Ciné<span class="text-red-500">Track</span>
+      </a>
 
-      <div class="flex items-center gap-3">
-        <a 
-          href="index.html" 
-          class="text-sm bg-gray-700 hover:bg-gray-600 px-3.5 py-1.5 rounded text-white font-medium flex items-center gap-1.5 transition"
-        >
-          <span>← Catalogue</span>
-        </a>
-      </div>
+      <a
+        href="index.html"
+        class="text-sm bg-gray-700 hover:bg-gray-600 px-3.5 py-1.5 rounded text-white font-medium flex items-center gap-1.5 transition"
+      >
+        <span>← Catalogue</span>
+      </a>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-8">
 
+    <!-- Add / edit form -->
     <section class="bg-gray-800 border border-gray-700 rounded-lg p-5">
       <div class="flex items-center justify-between mb-4 border-b border-gray-700 pb-3">
         <div>
           <h2 id="form-title" class="text-lg font-bold text-white">Ajouter un film ou une série</h2>
           <p class="text-xs text-gray-400 mt-0.5">Renseignez les détails du titre à ajouter à la plateforme.</p>
         </div>
-        <button 
-          id="cancel-edit-btn" 
-          type="button" 
+        <button
+          id="cancel-edit-btn"
+          type="button"
           class="hidden bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1.5 rounded transition"
         >
           Annuler la modification
@@ -50,10 +48,10 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="space-y-1">
             <label for="content-title" class="block text-xs font-medium text-gray-300">Titre *</label>
-            <input 
-              type="text" 
-              id="content-title" 
-              placeholder="Ex: Inception" 
+            <input
+              type="text"
+              id="content-title"
+              placeholder="Ex: Inception"
               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
             />
             <span data-error-for="title" class="text-xs text-red-400 hidden block"></span>
@@ -61,8 +59,8 @@
 
           <div class="space-y-1">
             <label for="content-type" class="block text-xs font-medium text-gray-300">Type *</label>
-            <select 
-              id="content-type" 
+            <select
+              id="content-type"
               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500"
             >
               <option value="movie">Film</option>
@@ -73,11 +71,11 @@
 
           <div class="space-y-1">
             <label for="content-year" class="block text-xs font-medium text-gray-300">Année de sortie *</label>
-            <input 
-              type="number" 
-              id="content-year" 
-              placeholder="Ex: 2010" 
-              min="1900" 
+            <input
+              type="number"
+              id="content-year"
+              placeholder="Ex: 2010"
+              min="1900"
               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
             />
             <span data-error-for="releaseYear" class="text-xs text-red-400 hidden block"></span>
@@ -87,10 +85,10 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="md:col-span-2 space-y-1">
             <label for="content-image" class="block text-xs font-medium text-gray-300">URL de l'affiche (Image) *</label>
-            <input 
-              type="url" 
-              id="content-image" 
-              placeholder="https://image.tmdb.org/t/p/w500/..." 
+            <input
+              type="url"
+              id="content-image"
+              placeholder="https://image.tmdb.org/t/p/w500/..."
               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
             />
             <span data-error-for="image" class="text-xs text-red-400 hidden block"></span>
@@ -98,11 +96,11 @@
 
           <div id="movie-duration-group" class="space-y-1">
             <label for="content-duration" class="block text-xs font-medium text-gray-300">Durée en minutes *</label>
-            <input 
-              type="number" 
-              id="content-duration" 
-              placeholder="Ex: 148" 
-              min="1" 
+            <input
+              type="number"
+              id="content-duration"
+              placeholder="Ex: 148"
+              min="1"
               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
             />
             <span data-error-for="duration" class="text-xs text-red-400 hidden block"></span>
@@ -110,11 +108,11 @@
 
           <div id="series-seasons-group" class="space-y-1 hidden">
             <label for="content-seasons" class="block text-xs font-medium text-gray-300">Nombre de saisons *</label>
-            <input 
-              type="number" 
-              id="content-seasons" 
-              placeholder="Ex: 5" 
-              min="1" 
+            <input
+              type="number"
+              id="content-seasons"
+              placeholder="Ex: 5"
+              min="1"
               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
             />
             <span data-error-for="seasons" class="text-xs text-red-400 hidden block"></span>
@@ -123,10 +121,10 @@
 
         <div class="flex flex-col sm:flex-row gap-4 items-start">
           <div class="w-24 h-32 bg-gray-900 border border-gray-700 rounded overflow-hidden shrink-0 flex items-center justify-center">
-            <img 
-              id="image-preview" 
-              src="" 
-              alt="Prévisualisation" 
+            <img
+              id="image-preview"
+              src=""
+              alt="Prévisualisation"
               class="w-full h-full object-cover hidden"
             />
             <span id="image-preview-placeholder" class="text-[11px] text-gray-500 text-center px-1">
@@ -138,30 +136,30 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="space-y-1">
                 <label for="content-genres" class="block text-xs font-medium text-gray-300">Genres (séparés par virgule)</label>
-                <input 
-                  type="text" 
-                  id="content-genres" 
-                  placeholder="Action, Thriller, Sci-Fi" 
+                <input
+                  type="text"
+                  id="content-genres"
+                  placeholder="Action, Thriller, Sci-Fi"
                   class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
                 />
               </div>
 
               <div class="space-y-1">
                 <label for="content-directors" class="block text-xs font-medium text-gray-300">Réalisateurs (par virgule)</label>
-                <input 
-                  type="text" 
-                  id="content-directors" 
-                  placeholder="Christopher Nolan" 
+                <input
+                  type="text"
+                  id="content-directors"
+                  placeholder="Christopher Nolan"
                   class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
                 />
               </div>
 
               <div class="space-y-1">
                 <label for="content-countries" class="block text-xs font-medium text-gray-300">Pays de production (par virgule)</label>
-                <input 
-                  type="text" 
-                  id="content-countries" 
-                  placeholder="USA, UK" 
+                <input
+                  type="text"
+                  id="content-countries"
+                  placeholder="USA, UK"
                   class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
                 />
               </div>
@@ -169,10 +167,10 @@
 
             <div class="space-y-1">
               <label for="content-description" class="block text-xs font-medium text-gray-300">Description</label>
-              <textarea 
-                id="content-description" 
-                rows="2" 
-                placeholder="Synopsis du film ou de la série..." 
+              <textarea
+                id="content-description"
+                rows="2"
+                placeholder="Synopsis du film ou de la série..."
                 class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
               ></textarea>
             </div>
@@ -180,9 +178,9 @@
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-700">
-          <button 
-            type="submit" 
-            id="submit-content-btn" 
+          <button
+            type="submit"
+            id="submit-content-btn"
             class="bg-red-600 hover:bg-red-700 text-white font-medium px-5 py-2 rounded text-sm transition"
           >
             Ajouter le titre
@@ -191,6 +189,7 @@
       </form>
     </section>
 
+    <!-- Content table -->
     <section class="bg-gray-800 border border-gray-700 rounded-lg p-5">
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
@@ -202,10 +201,10 @@
         </div>
 
         <div class="w-full sm:w-64">
-          <input 
-            type="text" 
-            id="admin-search-input" 
-            placeholder="Filtrer dans la table..." 
+          <input
+            type="text"
+            id="admin-search-input"
+            placeholder="Filtrer dans la table..."
             class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
           />
         </div>

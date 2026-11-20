@@ -8,43 +8,46 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col font-sans">
 
+  <!-- Header: logo, search, and navigation -->
   <header class="bg-gray-800 border-b border-gray-700 py-4 px-6">
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="flex items-center justify-between">
         <a href="index.html" class="text-2xl font-bold text-white tracking-wide">
           Ciné<span class="text-red-500">Track</span>
         </a>
+
+        <!-- Small screens get compact buttons -->
         <div class="flex items-center gap-2 sm:hidden">
           <a href="admin.html" class="text-xs bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded text-white font-medium">
             Admin
           </a>
-          <button 
-            id="toggle-favorites-btn-mobile" 
+          <button
+            id="toggle-favorites-btn-mobile"
             class="text-xs bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded text-white flex items-center"
           >
             ♥ <span id="mobile-fav-count" class="ml-1 bg-red-600 px-1.5 py-0.2 rounded-full font-bold">0</span>
           </button>
         </div>
       </div>
-      
+
       <div class="flex-1 max-w-sm">
-        <input 
-          type="text" 
-          id="search-input" 
-          placeholder="Rechercher un film ou une série..." 
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Rechercher un film ou une série..."
           class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-1.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
         />
       </div>
 
       <div class="hidden sm:flex items-center gap-3">
-        <a 
-          href="admin.html" 
+        <a
+          href="admin.html"
           class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-white font-medium flex items-center gap-1.5 transition"
         >
           <span>Administration</span>
         </a>
-        <button 
-          id="toggle-favorites-btn" 
+        <button
+          id="toggle-favorites-btn"
           class="lg:hidden text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-white flex items-center justify-between gap-2"
         >
           <span>Favoris</span>
@@ -56,8 +59,9 @@
 
   <div class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full flex flex-col lg:flex-row gap-6">
 
+    <!-- Catalog -->
     <main class="flex-1 min-w-0">
-      
+
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div class="flex gap-2" id="filter-buttons">
           <button data-type="all" class="filter-btn px-3 py-1 text-sm rounded bg-red-600 text-white font-medium">
@@ -85,8 +89,9 @@
 
     </main>
 
-    <aside 
-      id="favorites-sidebar" 
+    <!-- Favorites sidebar -->
+    <aside
+      id="favorites-sidebar"
       class="fixed inset-y-0 right-0 z-50 w-72 bg-gray-800 p-4 border-l border-gray-700 flex flex-col transition-transform duration-200 transform translate-x-full lg:translate-x-0 lg:static lg:inset-auto lg:rounded lg:border lg:w-72 shrink-0"
     >
       <div class="flex items-center justify-between pb-2 border-b border-gray-700">
@@ -103,6 +108,7 @@
 
   <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
 
+  <!-- Details modal: shown when a card is clicked -->
   <div id="detail-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
     <div id="modal-container" class="bg-gray-800 border border-gray-700 rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="flex items-center justify-between p-3.5 border-b border-gray-700 shrink-0">
@@ -113,7 +119,7 @@
       <div class="p-4 overflow-y-auto flex-1 space-y-5">
         <div class="flex flex-col sm:flex-row gap-4">
           <img id="modal-image" src="" alt="" class="w-full sm:w-44 h-60 object-cover rounded bg-gray-900 shrink-0 border border-gray-700">
-          
+
           <div class="text-xs space-y-2 text-gray-300 flex-1">
             <div id="modal-rating-badge" class="inline-flex items-center gap-1.5 bg-gray-900 px-2.5 py-1 rounded border border-gray-700 mb-1"></div>
             <p><strong class="text-white">Type :</strong> <span id="modal-type"></span></p>
@@ -129,6 +135,7 @@
           </div>
         </div>
 
+        <!-- Comments and ratings -->
         <div class="border-t border-gray-700 pt-4 space-y-3">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-sm text-white flex items-center gap-2">
@@ -144,10 +151,10 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <input 
-                  type="text" 
-                  id="comment-author" 
-                  placeholder="Votre nom ou pseudo *" 
+                <input
+                  type="text"
+                  id="comment-author"
+                  placeholder="Votre nom ou pseudo *"
                   class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
                 />
                 <span data-error-for="author" class="text-[11px] text-red-400 hidden mt-0.5 block"></span>
@@ -167,19 +174,19 @@
             </div>
 
             <div>
-              <textarea 
-                id="comment-text" 
-                rows="2" 
-                placeholder="Écrivez votre commentaire ici... *" 
+              <textarea
+                id="comment-text"
+                rows="2"
+                placeholder="Écrivez votre commentaire ici... *"
                 class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
               ></textarea>
               <span data-error-for="text" class="text-[11px] text-red-400 hidden mt-0.5 block"></span>
             </div>
 
             <div class="flex justify-end">
-              <button 
-                type="submit" 
-                id="submit-comment-btn" 
+              <button
+                type="submit"
+                id="submit-comment-btn"
                 class="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-1.5 rounded font-medium transition"
               >
                 Publier l'avis

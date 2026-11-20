@@ -1,8 +1,12 @@
-export function isValidUrl(string) {
+// These functions check form values before they are sent to the API.
+// Each one returns { isValid, errors } where `errors` is an object
+// containing one message per invalid field.
+
+export function isValidUrl(value) {
   try {
-    const url = new URL(string);
+    const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:";
-  } catch (_) {
+  } catch (error) {
     return false;
   }
 }
@@ -28,6 +32,7 @@ export function validateContent(data) {
     errors.image = "Veuillez saisir une URL d'image valide (http:// ou https://).";
   }
 
+  // A film needs a duration, while a series needs a number of seasons.
   if (data.type === "movie") {
     const duration = Number(data.duration);
     if (!data.duration || isNaN(duration) || duration <= 0) {

@@ -1,3 +1,5 @@
+// This file controls the catalog page (index.html).
+
 import { getContents, getComments, createComment } from "./api.js";
 import {
   getFavorites,
@@ -20,6 +22,7 @@ import {
   clearFieldErrors,
 } from "./ui.js";
 
+// Data that can change while the page is open.
 const state = {
   allTitles: [],
   allComments: [],
@@ -30,6 +33,7 @@ const state = {
   activeItem: null,
 };
 
+// We look up each HTML element once and reuse it afterwards.
 const elements = {
   grid: document.getElementById("items-grid"),
   statusMessage: document.getElementById("status-message"),
@@ -69,52 +73,66 @@ const elements = {
   commentRatingValue: document.getElementById("comment-rating-value"),
 };
 
-function debounce(func, delay = 300) {
+// Wait a short moment after the user stops typing before searching.
+function debounce(callback, delay = 300) {
   let timer;
+
   return (...args) => {
     clearTimeout(timer);
-    timer = setTimeout(() => func(...args), delay);
+    timer = setTimeout(() => callback(...args), delay);
   };
 }
 
+// Calculate the average rating for one film or series.
 function getItemRating(contentId) {
-  const itemComments = state.allComments.filter(
-    (c) => String(c.contentId) === String(contentId)
+  const commentsForItem = state.allComments.filter(
+    (comment) => String(comment.contentId) === String(contentId)
   );
-  const notes = itemComments.filter((c) => c.rating);
-  const avg = notes.length
-    ? notes.reduce((sum, c) => sum + Number(c.rating), 0) / notes.length
-    : 0;
+  const ratings = commentsForItem.filter((comment) => comment.rating);
+
+  let total = 0;
+  ratings.forEach((comment) => {
+    total += Number(comment.rating);
+  });
+
+  const average = ratings.length > 0 ? total / ratings.length : 0;
+
   return {
-    avg,
-    count: notes.length,
-    totalComments: itemComments.length,
+    average,
+    count: ratings.length,
   };
 }
 
-function filterBySearch(items, query) {
-  if (!query) return items;
-  const clean = query.trim().toLowerCase();
-  return items.filter((item) => item.title.toLowerCase().includes(clean));
+function filterBySearch(titles, query) {
+  if (!query) {
+    return titles;
+  }
+
+  const searchTerm = query.trim().toLowerCase();
+  return titles.filter((title) => title.title.toLowerCase().includes(searchTerm));
 }
 
-function filterByType(items, type) {
-  if (type === "all") return items;
-  return items.filter((item) => item.type === type);
+function filterByType(titles, type) {
+  if (type === "all") {
+    return titles;
+  }
+
+  return titles.filter((title) => title.type === type);
 }
 
-function paginate(items, page, perPage = 8) {
-  const start = (page - 1) * perPage;
-  return items.slice(start, start + perPage);
+function paginate(titles, page, perPage = 8) {
+  const startIndex = (page - 1) * perPage;
+  return titles.slice(startIndex, startIndex + perPage);
 }
 
+// Rebuild the catalog grid and pagination after a change.
 function updateView() {
-  let filtered = filterBySearch(state.allTitles, state.searchQuery);
-  filtered = filterByType(filtered, state.currentType);
+  let visibleTitles = filterBySearch(state.allTitles, state.searchQuery);
+  visibleTitles = filterByType(visibleTitles, state.currentType);
 
-  const total = filtered.length;
+  const totalTitles = visibleTitles.length;
 
-  if (total === 0) {
+  if (totalTitles === 0) {
     elements.grid.innerHTML = "";
     elements.paginationContainer.classList.add("hidden");
     showStatus(elements.statusMessage, "empty", "Aucun résultat trouvé pour votre recherche.");
@@ -123,18 +141,19 @@ function updateView() {
 
   hideStatus(elements.statusMessage);
 
-  const totalPages = Math.ceil(total / state.itemsPerPage);
+  const totalPages = Math.ceil(totalTitles / state.itemsPerPage);
+
   if (state.currentPage > totalPages) {
     state.currentPage = totalPages || 1;
   }
 
-  const itemsToShow = paginate(filtered, state.currentPage, state.itemsPerPage);
+  const titlesForPage = paginate(visibleTitles, state.currentPage, state.itemsPerPage);
 
-  elements.grid.innerHTML = itemsToShow
-    .map((item) => {
-      const isFav = isFavorite(item.id);
-      const ratingInfo = getItemRating(item.id);
-      return createCard(item, isFav, ratingInfo.avg, ratingInfo.count);
+  elements.grid.innerHTML = titlesForPage
+    .map((content) => {
+      const favorite = isFavorite(content.id);
+      const rating = getItemRating(content.id);
+      return createCard(content, favorite, rating.average, rating.count);
     })
     .join("");
 
@@ -142,13 +161,14 @@ function updateView() {
   renderPagination(state.currentPage, totalPages);
 }
 
+// The heart button is inside the card, so it needs its own click handler.
 function attachCardEvents() {
-  const favBtns = elements.grid.querySelectorAll(".favorite-toggle-btn");
-  favBtns.forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      toggleFavorite(id);
+  const favoriteButtons = elements.grid.querySelectorAll(".favorite-toggle-btn");
+
+  favoriteButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleFavorite(button.dataset.id);
     });
   });
 }
@@ -158,9 +178,10 @@ function toggleFavorite(id) {
     removeFavorite(id);
     showToast("Retiré des favoris");
   } else {
-    const item = state.allTitles.find((t) => String(t.id) === String(id));
-    if (item) {
-      addFavorite(item);
+    const content = state.allTitles.find((title) => String(title.id) === String(id));
+
+    if (content) {
+      addFavorite(content);
       showToast("Ajouté aux favoris");
     }
   }
@@ -173,11 +194,17 @@ function renderFavoritesView() {
   const favorites = getFavorites();
   const count = favorites.length;
 
-  if (elements.mobileFavCount) elements.mobileFavCount.textContent = count;
-  if (elements.tabletFavCount) elements.tabletFavCount.textContent = count;
+  if (elements.mobileFavCount) {
+    elements.mobileFavCount.textContent = count;
+  }
+
+  if (elements.tabletFavCount) {
+    elements.tabletFavCount.textContent = count;
+  }
 
   if (count === 0) {
-    elements.favoritesList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Aucun favori pour le moment.</p>';
+    elements.favoritesList.innerHTML =
+      '<p class="text-xs text-gray-500 text-center py-4">Aucun favori pour le moment.</p>';
     return;
   }
 
@@ -192,11 +219,12 @@ function renderPagination(currentPage, totalPages) {
     elements.paginationContainer.classList.add("hidden");
     return;
   }
+
   elements.paginationContainer.classList.remove("hidden");
 
   let html = `
-    <button 
-      data-page="${currentPage - 1}" 
+    <button
+      data-page="${currentPage - 1}"
       class="pagination-btn px-2.5 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded disabled:opacity-40"
       ${currentPage === 1 ? "disabled" : ""}
     >
@@ -204,25 +232,26 @@ function renderPagination(currentPage, totalPages) {
     </button>
   `;
 
-  for (let i = 1; i <= totalPages; i++) {
-    const isCurrent = i === currentPage;
+  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+    const isCurrentPage = pageNumber === currentPage;
+
     html += `
-      <button 
-        data-page="${i}" 
+      <button
+        data-page="${pageNumber}"
         class="pagination-btn w-6 h-6 text-xs rounded ${
-          isCurrent
+          isCurrentPage
             ? "bg-red-600 text-white font-bold"
             : "bg-gray-800 text-gray-300 hover:bg-gray-700"
         }"
       >
-        ${i}
+        ${pageNumber}
       </button>
     `;
   }
 
   html += `
-    <button 
-      data-page="${currentPage + 1}" 
+    <button
+      data-page="${currentPage + 1}"
       class="pagination-btn px-2.5 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded disabled:opacity-40"
       ${currentPage === totalPages ? "disabled" : ""}
     >
@@ -235,10 +264,13 @@ function renderPagination(currentPage, totalPages) {
 
 function setStarRating(rating) {
   elements.commentRatingValue.value = rating;
+
   const stars = elements.starPicker.querySelectorAll(".star");
+
   stars.forEach((star) => {
-    const val = Number(star.dataset.star);
-    if (val <= rating) {
+    const starValue = Number(star.dataset.star);
+
+    if (starValue <= rating) {
       star.className = "star text-yellow-400";
     } else {
       star.className = "star text-gray-600";
@@ -246,23 +278,25 @@ function setStarRating(rating) {
   });
 }
 
-function openModal(item) {
-  state.activeItem = item;
-  const isMovie = item.type === "movie";
+function openModal(content) {
+  state.activeItem = content;
+  const isMovie = content.type === "movie";
 
-  elements.modalTitle.textContent = item.title;
-  elements.modalImage.src = item.image;
-  elements.modalImage.alt = item.title;
+  elements.modalTitle.textContent = content.title;
+  elements.modalImage.src = content.image;
+  elements.modalImage.alt = content.title;
   elements.modalType.textContent = isMovie ? "Film" : "Série";
-  elements.modalYear.textContent = item.releaseYear;
+  elements.modalYear.textContent = content.releaseYear;
   elements.modalDurationLabel.textContent = isMovie ? "Durée :" : "Saisons :";
   elements.modalDuration.textContent = isMovie
-    ? `${item.duration || 0} min`
-    : `${item.seasons ? item.seasons.length : 0} saison(s)`;
-  elements.modalGenres.textContent = (item.genres || []).join(", ") || "N/A";
-  elements.modalDirectors.textContent = (item.directors || []).join(", ") || "Inconnu";
-  elements.modalCountries.textContent = (item.productionCountries || []).join(", ") || "Inconnu";
-  elements.modalDescription.textContent = item.description || "Aucune description fournie.";
+    ? `${content.duration || 0} min`
+    : `${content.seasons ? content.seasons.length : 0} saison(s)`;
+  elements.modalGenres.textContent = (content.genres || []).join(", ") || "N/A";
+  elements.modalDirectors.textContent = (content.directors || []).join(", ") || "Inconnu";
+  elements.modalCountries.textContent =
+    (content.productionCountries || []).join(", ") || "Inconnu";
+  elements.modalDescription.textContent =
+    content.description || "Aucune description fournie.";
 
   elements.commentAuthor.value = getPseudo();
   setStarRating(5);
@@ -279,61 +313,73 @@ function closeModal() {
 }
 
 function renderModalComments() {
-  if (!state.activeItem) return;
-
-  const itemComments = state.allComments.filter(
-    (c) => String(c.contentId) === String(state.activeItem.id)
-  );
-
-  elements.commentsCountBadge.textContent = itemComments.length;
-
-  const ratingInfo = getItemRating(state.activeItem.id);
-  if (ratingInfo.count > 0) {
-    elements.modalRatingBadge.innerHTML = `
-      <span class="text-yellow-400">${renderStars(ratingInfo.avg)}</span>
-      <span class="text-xs font-bold text-white">${ratingInfo.avg.toFixed(1)} / 5</span>
-      <span class="text-xs text-gray-400">(${ratingInfo.count} avis)</span>
-    `;
-  } else {
-    elements.modalRatingBadge.innerHTML = '<span class="text-xs text-gray-400">Aucune note pour le moment</span>';
-  }
-
-  if (itemComments.length === 0) {
-    elements.commentsList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Aucun commentaire pour ce titre. Soyez le premier à donner votre avis !</p>';
+  if (!state.activeItem) {
     return;
   }
 
-  elements.commentsList.innerHTML = itemComments.map(createCommentItem).join("");
+  const commentsForItem = state.allComments.filter(
+    (comment) => String(comment.contentId) === String(state.activeItem.id)
+  );
+
+  elements.commentsCountBadge.textContent = commentsForItem.length;
+
+  const rating = getItemRating(state.activeItem.id);
+
+  if (rating.count > 0) {
+    elements.modalRatingBadge.innerHTML = `
+      <span class="text-yellow-400">${renderStars(rating.average)}</span>
+      <span class="text-xs font-bold text-white">${rating.average.toFixed(1)} / 5</span>
+      <span class="text-xs text-gray-400">(${rating.count} avis)</span>
+    `;
+  } else {
+    elements.modalRatingBadge.innerHTML =
+      '<span class="text-xs text-gray-400">Aucune note pour le moment</span>';
+  }
+
+  if (commentsForItem.length === 0) {
+    elements.commentsList.innerHTML =
+      '<p class="text-xs text-gray-500 text-center py-4">Aucun commentaire pour ce titre. Soyez le premier à donner votre avis !</p>';
+    return;
+  }
+
+  elements.commentsList.innerHTML = commentsForItem.map(createCommentItem).join("");
 }
+
+// ---------- Event listeners ----------
 
 elements.searchInput.addEventListener(
   "input",
-  debounce((e) => {
-    state.searchQuery = e.target.value;
+  debounce((event) => {
+    state.searchQuery = event.target.value;
     state.currentPage = 1;
     updateView();
   }, 300)
 );
 
-elements.filterButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    elements.filterButtons.forEach((b) => {
-      b.className =
+elements.filterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    elements.filterButtons.forEach((otherButton) => {
+      otherButton.className =
         "filter-btn px-3 py-1 text-sm rounded bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium";
     });
-    btn.className = "filter-btn px-3 py-1 text-sm rounded bg-red-600 text-white font-medium";
 
-    state.currentType = btn.dataset.type;
+    button.className = "filter-btn px-3 py-1 text-sm rounded bg-red-600 text-white font-medium";
+
+    state.currentType = button.dataset.type;
     state.currentPage = 1;
     updateView();
   });
 });
 
-elements.paginationButtons.addEventListener("click", (e) => {
-  const btn = e.target.closest(".pagination-btn");
-  if (!btn || btn.disabled) return;
+elements.paginationButtons.addEventListener("click", (event) => {
+  const button = event.target.closest(".pagination-btn");
 
-  const page = parseInt(btn.dataset.page, 10);
+  if (!button || button.disabled) {
+    return;
+  }
+
+  const page = parseInt(button.dataset.page, 10);
+
   if (!isNaN(page) && page !== state.currentPage) {
     state.currentPage = page;
     updateView();
@@ -341,57 +387,71 @@ elements.paginationButtons.addEventListener("click", (e) => {
   }
 });
 
-elements.grid.addEventListener("click", (e) => {
-  const card = e.target.closest(".movie-card");
-  if (!card) return;
+elements.grid.addEventListener("click", (event) => {
+  const card = event.target.closest(".movie-card");
 
-  const id = card.dataset.id;
-  const item = state.allTitles.find((t) => String(t.id) === String(id));
-  if (item) {
-    openModal(item);
+  if (!card) {
+    return;
+  }
+
+  const content = state.allTitles.find(
+    (title) => String(title.id) === String(card.dataset.id)
+  );
+
+  if (content) {
+    openModal(content);
   }
 });
 
-elements.favoritesList.addEventListener("click", (e) => {
-  const btn = e.target.closest(".remove-favorite-btn");
-  if (!btn) return;
+elements.favoritesList.addEventListener("click", (event) => {
+  const button = event.target.closest(".remove-favorite-btn");
 
-  const id = btn.dataset.removeId;
-  removeFavorite(id);
+  if (!button) {
+    return;
+  }
+
+  removeFavorite(button.dataset.removeId);
   renderFavoritesView();
   updateView();
 });
 
-elements.starPicker.addEventListener("click", (e) => {
-  const star = e.target.closest(".star");
-  if (!star) return;
-  const val = Number(star.dataset.star);
-  setStarRating(val);
+elements.starPicker.addEventListener("click", (event) => {
+  const star = event.target.closest(".star");
+
+  if (!star) {
+    return;
+  }
+
+  setStarRating(Number(star.dataset.star));
 });
 
-elements.commentForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (!state.activeItem) return;
+elements.commentForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!state.activeItem) {
+    return;
+  }
 
   const author = elements.commentAuthor.value;
   const text = elements.commentText.value;
   const rating = Number(elements.commentRatingValue.value);
 
   const validation = validateComment({ author, text });
+
   if (!validation.isValid) {
     displayFieldErrors(elements.commentForm, validation.errors);
     return;
   }
-  clearFieldErrors(elements.commentForm);
 
+  clearFieldErrors(elements.commentForm);
   savePseudo(author);
 
-  const submitBtn = document.getElementById("submit-comment-btn");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Publication...";
+  const submitButton = document.getElementById("submit-comment-btn");
+  submitButton.disabled = true;
+  submitButton.textContent = "Publication...";
 
   try {
-    const newCommentPayload = {
+    const commentData = {
       contentId: String(state.activeItem.id),
       author: author.trim(),
       text: text.trim(),
@@ -399,8 +459,8 @@ elements.commentForm.addEventListener("submit", async (e) => {
       createdAt: new Date().toISOString(),
     };
 
-    const savedComment = await createComment(newCommentPayload);
-    state.allComments.unshift(savedComment);
+    const createdComment = await createComment(commentData);
+    state.allComments.unshift(createdComment);
 
     elements.commentText.value = "";
     renderModalComments();
@@ -410,19 +470,19 @@ elements.commentForm.addEventListener("submit", async (e) => {
     console.error(error);
     showToast("Impossible d'ajouter le commentaire.", "error");
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Publier l'avis";
+    submitButton.disabled = false;
+    submitButton.textContent = "Publier l'avis";
   }
 });
 
-elements.modal.addEventListener("click", (e) => {
-  if (e.target === elements.modal || e.target.closest("#close-modal-btn")) {
+elements.modal.addEventListener("click", (event) => {
+  if (event.target === elements.modal || event.target.closest("#close-modal-btn")) {
     closeModal();
   }
 });
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
     closeModal();
   }
 });
@@ -440,15 +500,22 @@ function toggleMobileSidebar(open) {
 if (elements.toggleFavoritesBtn) {
   elements.toggleFavoritesBtn.addEventListener("click", () => toggleMobileSidebar(true));
 }
+
 if (elements.toggleFavoritesBtnMobile) {
-  elements.toggleFavoritesBtnMobile.addEventListener("click", () => toggleMobileSidebar(true));
+  elements.toggleFavoritesBtnMobile.addEventListener("click", () =>
+    toggleMobileSidebar(true)
+  );
 }
+
 if (elements.closeSidebarBtn) {
   elements.closeSidebarBtn.addEventListener("click", () => toggleMobileSidebar(false));
 }
+
 if (elements.sidebarOverlay) {
   elements.sidebarOverlay.addEventListener("click", () => toggleMobileSidebar(false));
 }
+
+// ---------- Page start ----------
 
 async function init() {
   renderFavoritesView();
@@ -458,6 +525,7 @@ async function init() {
   elements.paginationContainer.classList.add("hidden");
 
   try {
+    // Load both lists at the same time to save time.
     const [titles, comments] = await Promise.all([
       getContents(),
       getComments().catch(() => []),
@@ -466,12 +534,12 @@ async function init() {
     state.allTitles = titles;
     state.allComments = comments;
     updateView();
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     showStatus(
       elements.statusMessage,
       "error",
-      `Erreur lors du chargement des données (${err.message}). Vérifiez votre endpoint MockAPI.`,
+      `Erreur lors du chargement des données (${error.message}).`,
       init
     );
   }

@@ -1,9 +1,7 @@
-import {
-  getContents,
-  createContent,
-  updateContent,
-  deleteContent,
-} from "./api.js";
+// This file controls the admin page (admin.html).
+// It handles the form, the table, and the add / edit / delete actions.
+
+import { getContents, createContent, updateContent, deleteContent } from "./api.js";
 import { validateContent } from "./validation.js";
 import {
   createAdminRow,
@@ -45,8 +43,10 @@ const elements = {
   adminSearchInput: document.getElementById("admin-search-input"),
 };
 
+// A film shows a duration field, while a series shows a seasons field.
 function updateTypeVisibility() {
   const type = elements.contentType.value;
+
   if (type === "movie") {
     elements.movieDurationGroup.classList.remove("hidden");
     elements.seriesSeasonsGroup.classList.add("hidden");
@@ -57,9 +57,10 @@ function updateTypeVisibility() {
 }
 
 function updateImagePreview() {
-  const url = elements.contentImage.value.trim();
-  if (url) {
-    elements.imagePreview.src = url;
+  const imageUrl = elements.contentImage.value.trim();
+
+  if (imageUrl) {
+    elements.imagePreview.src = imageUrl;
     elements.imagePreview.classList.remove("hidden");
     elements.imagePreviewPlaceholder.classList.add("hidden");
   } else {
@@ -81,39 +82,43 @@ elements.imagePreview.addEventListener("load", () => {
   elements.imagePreviewPlaceholder.textContent = "Aperçu image";
 });
 
-function getFormData() {
+// Read the form and turn it into the object expected by the API.
+function collectFormData() {
   const isMovie = elements.contentType.value === "movie";
-  const genresArray = elements.contentGenres.value
-    ? elements.contentGenres.value.split(",").map((g) => g.trim()).filter(Boolean)
-    : [];
-  const directorsArray = elements.contentDirectors.value
-    ? elements.contentDirectors.value.split(",").map((d) => d.trim()).filter(Boolean)
-    : [];
-  const countriesArray = elements.contentCountries.value
-    ? elements.contentCountries.value.split(",").map((c) => c.trim()).filter(Boolean)
+
+  const genres = elements.contentGenres.value
+    ? elements.contentGenres.value.split(",").map((genre) => genre.trim()).filter(Boolean)
     : [];
 
-  const data = {
+  const directors = elements.contentDirectors.value
+    ? elements.contentDirectors.value.split(",").map((director) => director.trim()).filter(Boolean)
+    : [];
+
+  const countries = elements.contentCountries.value
+    ? elements.contentCountries.value.split(",").map((country) => country.trim()).filter(Boolean)
+    : [];
+
+  const contentData = {
     title: elements.contentTitle.value.trim(),
     type: elements.contentType.value,
     releaseYear: Number(elements.contentYear.value),
     image: elements.contentImage.value.trim(),
-    genres: genresArray,
-    directors: directorsArray,
-    productionCountries: countriesArray,
+    genres: genres,
+    directors: directors,
+    productionCountries: countries,
     description: elements.contentDescription.value.trim(),
   };
 
   if (isMovie) {
-    data.duration = Number(elements.contentDuration.value) || 0;
-    data.seasons = undefined;
+    contentData.duration = Number(elements.contentDuration.value) || 0;
+    contentData.seasons = undefined;
   } else {
     const seasonsCount = Number(elements.contentSeasons.value) || 1;
-    data.seasons = Array.from({ length: seasonsCount }, (_, i) => i + 1);
-    data.duration = undefined;
+    contentData.seasons = Array.from({ length: seasonsCount }, (_, index) => index + 1);
+    contentData.duration = undefined;
   }
 
-  return data;
+  return contentData;
 }
 
 function resetForm() {
@@ -128,31 +133,31 @@ function resetForm() {
   updateImagePreview();
 }
 
-function fillFormForEdit(item) {
-  state.editingId = item.id;
-  elements.contentId.value = item.id;
-  elements.contentTitle.value = item.title || "";
-  elements.contentType.value = item.type || "movie";
+function fillForm(content) {
+  state.editingId = content.id;
+  elements.contentId.value = content.id;
+  elements.contentTitle.value = content.title || "";
+  elements.contentType.value = content.type || "movie";
   updateTypeVisibility();
 
-  elements.contentYear.value = item.releaseYear || "";
-  elements.contentImage.value = item.image || "";
+  elements.contentYear.value = content.releaseYear || "";
+  elements.contentImage.value = content.image || "";
   updateImagePreview();
 
-  if (item.type === "movie") {
-    elements.contentDuration.value = item.duration || "";
+  if (content.type === "movie") {
+    elements.contentDuration.value = content.duration || "";
     elements.contentSeasons.value = "";
   } else {
-    elements.contentSeasons.value = item.seasons ? item.seasons.length : 1;
+    elements.contentSeasons.value = content.seasons ? content.seasons.length : 1;
     elements.contentDuration.value = "";
   }
 
-  elements.contentGenres.value = (item.genres || []).join(", ");
-  elements.contentDirectors.value = (item.directors || []).join(", ");
-  elements.contentCountries.value = (item.productionCountries || []).join(", ");
-  elements.contentDescription.value = item.description || "";
+  elements.contentGenres.value = (content.genres || []).join(", ");
+  elements.contentDirectors.value = (content.directors || []).join(", ");
+  elements.contentCountries.value = (content.productionCountries || []).join(", ");
+  elements.contentDescription.value = content.description || "";
 
-  elements.formTitle.textContent = `Modifier : ${item.title}`;
+  elements.formTitle.textContent = `Modifier : ${content.title}`;
   elements.submitBtn.textContent = "Enregistrer les modifications";
   elements.cancelEditBtn.classList.remove("hidden");
   clearFieldErrors(elements.form);
@@ -177,30 +182,38 @@ function renderTable(itemsToRender) {
   elements.tableBody.innerHTML = itemsToRender.map(createAdminRow).join("");
 }
 
+// ---------- Event listeners ----------
+
 elements.contentType.addEventListener("change", updateTypeVisibility);
 
 elements.contentImage.addEventListener("input", updateImagePreview);
 
 elements.cancelEditBtn.addEventListener("click", resetForm);
 
-elements.adminSearchInput.addEventListener("input", (e) => {
-  const query = e.target.value.trim().toLowerCase();
+elements.adminSearchInput.addEventListener("input", (event) => {
+  const query = event.target.value.trim().toLowerCase();
+
   if (!query) {
     renderTable(state.items);
     return;
   }
-  const filtered = state.items.filter((item) =>
+
+  const filteredItems = state.items.filter((item) =>
     item.title.toLowerCase().includes(query)
   );
-  renderTable(filtered);
+
+  renderTable(filteredItems);
 });
 
-elements.form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+elements.form.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-  const formData = getFormData();
+  const contentData = collectFormData();
+
+  // The form stores the duration and seasons as text, so we pass the raw
+  // values to the validator as well.
   const validation = validateContent({
-    ...formData,
+    ...contentData,
     duration: elements.contentDuration.value,
     seasons: elements.contentSeasons.value,
   });
@@ -209,27 +222,30 @@ elements.form.addEventListener("submit", async (e) => {
     displayFieldErrors(elements.form, validation.errors);
     return;
   }
+
   clearFieldErrors(elements.form);
 
-  elements.submitBtn.disabled = true;
-  const originalText = elements.submitBtn.textContent;
-  elements.submitBtn.textContent = "Enregistrement...";
+  const submitButton = elements.submitBtn;
+  submitButton.disabled = true;
+  submitButton.textContent = "Enregistrement...";
 
   try {
     if (state.editingId) {
-      const existing = state.items.find(
-        (i) => String(i.id) === String(state.editingId)
+      const existingContent = state.items.find(
+        (item) => String(item.id) === String(state.editingId)
       );
-      const payload = { ...existing, ...formData };
-      const updated = await updateContent(state.editingId, payload);
 
-      state.items = state.items.map((i) =>
-        String(i.id) === String(state.editingId) ? updated : i
+      const updatedContent = { ...existingContent, ...contentData };
+      const savedContent = await updateContent(state.editingId, updatedContent);
+
+      state.items = state.items.map((item) =>
+        String(item.id) === String(state.editingId) ? savedContent : item
       );
+
       showToast("Titre mis à jour avec succès !");
     } else {
-      const created = await createContent(formData);
-      state.items.unshift(created);
+      const createdContent = await createContent(contentData);
+      state.items.unshift(createdContent);
       showToast("Nouveau titre ajouté avec succès !");
     }
 
@@ -239,51 +255,71 @@ elements.form.addEventListener("submit", async (e) => {
     console.error(error);
     showToast(error.message || "Erreur lors de l'enregistrement.", "error");
   } finally {
-    elements.submitBtn.disabled = false;
-    elements.submitBtn.textContent = originalText;
+    submitButton.disabled = false;
+    submitButton.textContent = state.editingId
+      ? "Enregistrer les modifications"
+      : "Ajouter le titre";
   }
 });
 
-elements.tableBody.addEventListener("click", async (e) => {
-  const btn = e.target.closest("button");
-  if (!btn) return;
+elements.tableBody.addEventListener("click", async (event) => {
+  const button = event.target.closest("button");
 
-  const action = btn.dataset.action;
-  const id = btn.dataset.id;
-  const item = state.items.find((i) => String(i.id) === String(id));
-  if (!item) return;
+  if (!button) {
+    return;
+  }
+
+  const action = button.dataset.action;
+  const id = button.dataset.id;
+  const content = state.items.find((item) => String(item.id) === String(id));
+
+  if (!content) {
+    return;
+  }
 
   if (action === "edit") {
-    fillFormForEdit(item);
-  } else if (action === "delete") {
-    if (!confirm(`Supprimer « ${item.title} » définitivement ?`)) {
+    fillForm(content);
+    return;
+  }
+
+  if (action === "delete") {
+    const confirmed = confirm(`Supprimer « ${content.title} » définitivement ?`);
+
+    if (!confirmed) {
       return;
     }
 
-    btn.disabled = true;
-    btn.textContent = "...";
+    button.disabled = true;
+    button.textContent = "...";
 
     try {
-      await deleteContent(item.id);
-      state.items = state.items.filter((i) => String(i.id) !== String(item.id));
+      await deleteContent(content.id);
+
+      state.items = state.items.filter(
+        (item) => String(item.id) !== String(content.id)
+      );
+
       renderTable(state.items);
 
-      if (String(state.editingId) === String(item.id)) {
+      if (String(state.editingId) === String(content.id)) {
         resetForm();
       }
 
-      showToast(`« ${item.title} » a été supprimé.`);
+      showToast(`« ${content.title} » a été supprimé.`);
     } catch (error) {
       console.error(error);
       showToast("Erreur lors de la suppression.", "error");
-      btn.disabled = false;
-      btn.textContent = "Supprimer";
+      button.disabled = false;
+      button.textContent = "Supprimer";
     }
   }
 });
 
+// ---------- Page start ----------
+
 async function init() {
   updateTypeVisibility();
+
   showStatus(elements.adminStatus, "loading", "Chargement de la liste des contenus...");
   elements.tableBody.innerHTML = "";
 
@@ -291,12 +327,12 @@ async function init() {
     state.items = await getContents();
     hideStatus(elements.adminStatus);
     renderTable(state.items);
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     showStatus(
       elements.adminStatus,
       "error",
-      `Impossible de charger les données (${err.message}). Vérifiez votre endpoint MockAPI dans js/api.js.`,
+      `Impossible de charger les données (${error.message}).`,
       init
     );
   }

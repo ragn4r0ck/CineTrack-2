@@ -1,45 +1,65 @@
-const DEFAULT_URL = "https://6afaf087730c1d152f32cb94.mockapi.io/api/";
-const BASE_URL = DEFAULT_URL;
+// This file contains every call to the MockAPI service.
+// Keeping the URL here means there is only one place to change it.
 
-export async function request(path, options = {}) {
-  const url = BASE_URL.replace(/\/+$/, "") + path;
-  const res = await fetch(url, {
+const API_URL = "https://6afaf087730c1d152f32cb93.mockapi.io/api/";
+
+// A small helper that sends a request and returns the JSON response.
+// `path` is added to the end of API_URL, for example "/contents".
+async function apiRequest(path, options = {}) {
+  const url = API_URL.replace(/\/+$/, "") + path;
+
+  const response = await fetch(url, {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
 
-  if (!res.ok) {
-    throw new Error(`Erreur ${res.status} : ${res.statusText}`);
+  // fetch() does not throw for HTTP errors, so we check response.ok ourselves.
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status} : ${response.statusText}`);
   }
 
-  return res.json();
+  return response.json();
 }
 
-export const getContents = () => request("/contents");
+// ---------- Films and series (contents) ----------
 
-export const getContent = (id) => request(`/contents/${id}`);
+export function getContents() {
+  return apiRequest("/contents");
+}
 
-export const createContent = (data) =>
-  request("/contents", {
+export function getContent(id) {
+  return apiRequest(`/contents/${id}`);
+}
+
+export function createContent(content) {
+  return apiRequest("/contents", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify(content),
   });
+}
 
-export const updateContent = (id, data) =>
-  request(`/contents/${id}`, {
+export function updateContent(id, content) {
+  return apiRequest(`/contents/${id}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: JSON.stringify(content),
   });
+}
 
-export const deleteContent = (id) =>
-  request(`/contents/${id}`, {
+export function deleteContent(id) {
+  return apiRequest(`/contents/${id}`, {
     method: "DELETE",
   });
+}
 
-export const getComments = () => request("/comments");
+// ---------- Comments ----------
 
-export const createComment = (data) =>
-  request("/comments", {
+export function getComments() {
+  return apiRequest("/comments");
+}
+
+export function createComment(comment) {
+  return apiRequest("/comments", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify(comment),
   });
+}
