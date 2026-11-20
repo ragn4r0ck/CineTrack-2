@@ -1,4 +1,9 @@
-import { getContents, createContent } from "./api.js";
+import {
+  getContents,
+  createContent,
+  updateContent,
+  deleteContent,
+} from "./api.js";
 import { validateContent } from "./validation.js";
 import {
   createAdminRow,
@@ -11,10 +16,13 @@ import {
 
 const state = {
   items: [],
+  editingId: null,
 };
 
 const elements = {
   form: document.getElementById("content-form"),
+  formTitle: document.getElementById("form-title"),
+  cancelEditBtn: document.getElementById("cancel-edit-btn"),
   submitBtn: document.getElementById("submit-content-btn"),
   contentId: document.getElementById("content-id"),
   contentTitle: document.getElementById("content-title"),
@@ -34,6 +42,7 @@ const elements = {
   tableBody: document.getElementById("contents-table-body"),
   adminStatus: document.getElementById("admin-status"),
   contentsTotalBadge: document.getElementById("contents-total-badge"),
+  adminSearchInput: document.getElementById("admin-search-input"),
 };
 
 function updateTypeVisibility() {
@@ -108,11 +117,47 @@ function getFormData() {
 }
 
 function resetForm() {
+  state.editingId = null;
   elements.contentId.value = "";
   elements.form.reset();
   clearFieldErrors(elements.form);
+  elements.formTitle.textContent = "Ajouter un film ou une série";
+  elements.submitBtn.textContent = "Ajouter le titre";
+  elements.cancelEditBtn.classList.add("hidden");
   updateTypeVisibility();
   updateImagePreview();
+}
+
+function fillFormForEdit(item) {
+  state.editingId = item.id;
+  elements.contentId.value = item.id;
+  elements.contentTitle.value = item.title || "";
+  elements.contentType.value = item.type || "movie";
+  updateTypeVisibility();
+
+  elements.contentYear.value = item.releaseYear || "";
+  elements.contentImage.value = item.image || "";
+  updateImagePreview();
+
+  if (item.type === "movie") {
+    elements.contentDuration.value = item.duration || "";
+    elements.contentSeasons.value = "";
+  } else {
+    elements.contentSeasons.value = item.seasons ? item.seasons.length : 1;
+    elements.contentDuration.value = "";
+  }
+
+  elements.contentGenres.value = (item.genres || []).join(", ");
+  elements.contentDirectors.value = (item.directors || []).join(", ");
+  elements.contentCountries.value = (item.productionCountries || []).join(", ");
+  elements.contentDescription.value = item.description || "";
+
+  elements.formTitle.textContent = `Modifier : ${item.title}`;
+  elements.submitBtn.textContent = "Enregistrer les modifications";
+  elements.cancelEditBtn.classList.remove("hidden");
+  clearFieldErrors(elements.form);
+
+  elements.form.scrollIntoView({ behavior: "smooth" });
 }
 
 function renderTable(itemsToRender) {
@@ -136,6 +181,20 @@ elements.contentType.addEventListener("change", updateTypeVisibility);
 
 elements.contentImage.addEventListener("input", updateImagePreview);
 
+elements.cancelEditBtn.addEventListener("click", resetForm);
+
+elements.adminSearchInput.addEventListener("input", (e) => {
+  const query = e.target.value.trim().toLowerCase();
+  if (!query) {
+    renderTable(state.items);
+    return;
+  }
+  const filtered = state.items.filter((item) =>
+    item.title.toLowerCase().includes(query)
+  );
+  renderTable(filtered);
+});
+
 elements.form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -157,9 +216,23 @@ elements.form.addEventListener("submit", async (e) => {
   elements.submitBtn.textContent = "Enregistrement...";
 
   try {
-    const created = await createContent(formData);
-    state.items.unshift(created);
-    showToast("Nouveau titre ajouté avec succès !");
+    if (state.editingId) {
+      const existing = state.items.find(
+        (i) => String(i.id) === String(state.editingId)
+      );
+      const payload = { ...existing, ...formData };
+      const updated = await updateContent(state.editingId, payload);
+
+      state.items = state.items.map((i) =>
+        String(i.id) === String(state.editingId) ? updated : i
+      );
+      showToast("Titre mis à jour avec succès !");
+    } else {
+      const created = await createContent(formData);
+      state.items.unshift(created);
+      showToast("Nouveau titre ajouté avec succès !");
+    }
+
     renderTable(state.items);
     resetForm();
   } catch (error) {
@@ -168,6 +241,44 @@ elements.form.addEventListener("submit", async (e) => {
   } finally {
     elements.submitBtn.disabled = false;
     elements.submitBtn.textContent = originalText;
+  }
+});
+
+elements.tableBody.addEventListener("click", async (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const item = state.items.find((i) => String(i.id) === String(id));
+  if (!item) return;
+
+  if (action === "edit") {
+    fillFormForEdit(item);
+  } else if (action === "delete") {
+    if (!confirm(`Supprimer « ${item.title} » définitivement ?`)) {
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "...";
+
+    try {
+      await deleteContent(item.id);
+      state.items = state.items.filter((i) => String(i.id) !== String(item.id));
+      renderTable(state.items);
+
+      if (String(state.editingId) === String(item.id)) {
+        resetForm();
+      }
+
+      showToast(`« ${item.title} » a été supprimé.`);
+    } catch (error) {
+      console.error(error);
+      showToast("Erreur lors de la suppression.", "error");
+      btn.disabled = false;
+      btn.textContent = "Supprimer";
+    }
   }
 });
 
