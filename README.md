@@ -64,7 +64,6 @@ CinéTrack v2 est une évolution majeure de la plateforme CinéTrack, connectée
    ```javascript
    const DEFAULT_URL = "https://VOTRE-ID.mockapi.io/api/v1";
    ```
-   *(Vous pouvez également cliquer sur « Configurer MockAPI URL » directement depuis la page d'accueil pour la saisir dans le navigateur).*
 
 ## Structure du projet
 
@@ -76,7 +75,7 @@ CineTrackv2/
 │   ├── api.js         Appels HTTP (GET, POST, PUT, DELETE) via fetch et gestion des erreurs
 │   ├── ui.js          Génération des composants DOM, affichage des statuts, toasts et erreurs
 │   ├── validation.js  Validation des données des formulaires
-│   ├── storage.js     Gestion du localStorage (favoris, pseudo, endpoint personnalisé)
+│   ├── storage.js     Gestion du localStorage (favoris, pseudo)
 │   ├── main.js        Gestion de la page catalogue et des commentaires
 │   └── admin.js       Gestion de la page administration et du CRUD
 └── README.md          Documentation du projet

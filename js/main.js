@@ -6,8 +6,6 @@ import {
   isFavorite,
   getPseudo,
   savePseudo,
-  getApiUrl,
-  saveApiUrl,
 } from "./storage.js";
 import { validateComment } from "./validation.js";
 import {
@@ -49,7 +47,6 @@ const elements = {
   sidebarOverlay: document.getElementById("sidebar-overlay"),
   mobileFavCount: document.getElementById("mobile-fav-count"),
   tabletFavCount: document.getElementById("tablet-fav-count"),
-  configEndpointBtn: document.getElementById("config-endpoint-btn"),
   modal: document.getElementById("detail-modal"),
   modalTitle: document.getElementById("modal-title"),
   modalImage: document.getElementById("modal-image"),
@@ -451,17 +448,6 @@ if (elements.closeSidebarBtn) {
 }
 if (elements.sidebarOverlay) {
   elements.sidebarOverlay.addEventListener("click", () => toggleMobileSidebar(false));
-}
-
-if (elements.configEndpointBtn) {
-  elements.configEndpointBtn.addEventListener("click", () => {
-    const current = getApiUrl() || "https://VOTRE-ID.mockapi.io/api/v1";
-    const next = prompt("Entrez l'URL de votre MockAPI (ex: https://6737....mockapi.io/api/v1) :", current);
-    if (next !== null && next.trim()) {
-      saveApiUrl(next.trim());
-      window.location.reload();
-    }
-  });
 }
 
 async function init() {

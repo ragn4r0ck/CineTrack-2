@@ -1,6 +1,5 @@
 const FAVORITES_KEY = "cinetrack_favorites";
 const PSEUDO_KEY = "cinetrack_pseudo";
-const API_URL_KEY = "cinetrack_api_url";
 
 export function getFavorites() {
   try {
@@ -48,12 +47,4 @@ export function getPseudo() {
 
 export function savePseudo(pseudo) {
   localStorage.setItem(PSEUDO_KEY, pseudo.trim());
-}
-
-export function getApiUrl() {
-  return localStorage.getItem(API_URL_KEY) || "";
-}
-
-export function saveApiUrl(url) {
-  localStorage.setItem(API_URL_KEY, url.trim());
 }

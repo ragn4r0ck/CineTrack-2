@@ -1,5 +1,5 @@
 const DEFAULT_URL = "https://6afaf087730c1d152f32cb94.mockapi.io/api/";
-const BASE_URL = localStorage.getItem("cinetrack_api_url") || DEFAULT_URL;
+const BASE_URL = DEFAULT_URL;
 
 export async function request(path, options = {}) {
   const url = BASE_URL.replace(/\/+$/, "") + path;
